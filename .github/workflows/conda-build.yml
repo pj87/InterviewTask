@@ -1,0 +1,40 @@
+name: Build and Upload Conda Packages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [libjpeg-turbo, python-rapidjson, monado]
+        os: [ubuntu-latest, windows-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniconda-version: latest
+          auto-update-conda: true
+
+      - name: Install conda-build and anaconda-client
+        shell: bash -el {0}
+        run: conda install -n base conda-build anaconda-client -y -q
+
+      - name: Build ${{ matrix.package }}
+        shell: bash -el {0}
+        run: conda build ${{ matrix.package }}/conda-recipe/ -c conda-forge
+
+      - name: Upload to Anaconda.org
+        shell: bash -el {0}
+        env:
+          ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
+        run: |
+          OUTPUT=$(conda build ${{ matrix.package }}/conda-recipe/ --output -c conda-forge 2>/dev/null)
+          anaconda -t "$ANACONDA_TOKEN" upload "$OUTPUT" --skip-existing

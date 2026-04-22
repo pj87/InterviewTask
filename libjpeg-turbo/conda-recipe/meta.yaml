@@ -1,0 +1,36 @@
+{% set version = "3.1.0" %}
+
+package:
+  name: libjpeg-turbo
+  version: {{ version }}
+
+source:
+  url: https://github.com/libjpeg-turbo/libjpeg-turbo/archive/refs/tags/{{ version }}.tar.gz
+  sha256: 35fec2e1ddfb05ecf6d93e50bc57c1e54bc81c16d611ddf6eff73fff266d8285
+
+build:
+  number: 0
+  run_exports:
+    - {{ pin_subpackage('libjpeg-turbo', max_pin='x') }}
+
+requirements:
+  build:
+    - {{ compiler('c') }}     # [unix]
+    - cmake >=3.10
+    - ninja
+    - nasm
+
+test:
+  commands:
+    - if not exist %LIBRARY_BIN%\jpeg8.dll exit 1         # [win]
+    - if not exist %LIBRARY_LIB%\jpeg.lib exit 1          # [win]
+    - test -f $PREFIX/lib/libjpeg.so                       # [unix]
+    - test -f $PREFIX/lib/libturbojpeg.so                  # [unix]
+    - test -f $PREFIX/include/jpeglib.h                    # [unix]
+    - test -f $PREFIX/include/turbojpeg.h                  # [unix]
+    - ldd $PREFIX/lib/libjpeg.so | grep -v "not found"  # [unix]
+    - $PREFIX/bin/tjbench --help 2>&1 | grep -i "usage\|tjbench"  # [unix]
+
+about:
+  home: https://libjpeg-turbo.org/
+  license: IJG AND BSD-3-Clause AND Zlib

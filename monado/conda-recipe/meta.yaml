@@ -1,0 +1,55 @@
+{% set version = "25.1.0" %}
+
+package:
+  name: monado
+  version: {{ version }}
+
+source:
+  url: https://gitlab.freedesktop.org/monado/monado/-/archive/v{{ version }}/monado-v{{ version }}.tar.gz
+  sha256: eabff7c75e69fd5006898afc5bf0110b79dbf3f4a7ca04f995f0cd4eb512e816
+
+build:
+  number: 0
+  ignore_run_exports:
+    - glslang             # [unix]
+    - sdl2                # [unix]
+
+requirements:
+  build:
+    - {{ compiler('c') }}     # [unix]
+    - {{ compiler('cxx') }}   # [unix]
+    - cmake >=3.22,<4
+    - ninja
+    - pkg-config              # [unix]
+    - git                     # [win]
+  host:
+    - vulkan-headers      # [unix]
+    - libvulkan-loader    # [unix]
+    - glslang             # [unix]
+    - eigen =3.4.*        # [unix]
+    - libusb              # [unix]
+    - libhidapi           # [unix]
+    - libudev             # [unix]
+    - sdl2                # [unix]
+    - dbus                # [unix]
+  run:
+    - dbus                # [unix]
+
+test:
+  commands:
+    - if not exist "%PREFIX%\bin\openxr_monado.dll" exit 1  # [win]
+    - if not exist "%PREFIX%\bin\monado-service.exe" exit 1  # [win]
+    - if not exist "%PREFIX%\bin\monado-cli.exe" exit 1  # [win]
+    - test -f $PREFIX/bin/monado-service  # [unix]
+    - test -f $PREFIX/bin/monado-cli  # [unix]
+    - test -f $PREFIX/bin/monado-ctl  # [unix]
+    - test -f $PREFIX/lib/libopenxr_monado.so  # [unix]
+    - test -f $PREFIX/lib/libmonado.so  # [unix]
+    - test -f $PREFIX/include/monado/monado.h  # [unix]
+    - test -f $PREFIX/share/openxr/1/openxr_monado.json  # [unix]
+    - test -f $PREFIX/share/steamvr-monado/bin/linux64/driver_monado.so  # [unix]
+    - ldd $PREFIX/bin/monado-service | grep -v "not found"  # [unix]
+
+about:
+  home: https://monado.freedesktop.org
+  license: BSL-1.0
